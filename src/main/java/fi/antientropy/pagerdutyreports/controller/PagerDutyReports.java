@@ -37,6 +37,7 @@ public class PagerDutyReports {
             @RequestParam Optional<String> inclusion, @RequestParam String token,
             @RequestParam String since, @RequestParam String until, @RequestParam String timezone) {
         StringBuilder builder = new StringBuilder();
+        builder.append("IncidentNumber;IncidentKey;IncidentCreatedAt;ReactedToIncidentAt;ResolvedIncidentAt;TimeBetweenIncidentCreatedAndReacted;IncidentStatus;IncidentNotes").append("\n");
         try {
             List<Integer> days = Arrays.asList(Utils.MONDAY, Utils.TUESDAY, Utils.WEDNESDAY, Utils.THURSDAY, Utils.FRIDAY);
             serviceLevels.init(serviceDays, serviceStart, serviceStop);
