@@ -1,0 +1,6 @@
+{
+  "name": "pagerduty-reports",
+  "description": "Get csv report from you Pagerduty incidents",
+  "repository": "https://github.com/jnupponen/pagerduty-reports",
+  "keywords": ["java", "pagerduty", "api", "reporting"]
+}
