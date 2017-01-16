@@ -6,6 +6,10 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import org.joda.time.DateTime;
+import org.joda.time.format.DateTimeFormat;
+import org.joda.time.format.DateTimeFormatter;
+import org.joda.time.format.ISODateTimeFormat;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -35,10 +39,13 @@ public class PagerDutyReports {
     public ResponseEntity<?> getReport(@RequestParam List<Integer> serviceDays,
             @RequestParam String serviceStart, @RequestParam String serviceStop,
             @RequestParam Optional<String> inclusion, @RequestParam String token,
-            @RequestParam String since, @RequestParam String until, @RequestParam String timezone) {
+            @RequestParam String since, @RequestParam String until, @RequestParam String timezone,
+            @RequestParam Optional<String> outputDateTimeFormat) {
         StringBuilder builder = new StringBuilder();
         builder.append("IncidentNumber;IncidentKey;IncidentCreatedAt;ReactedToIncidentAt;ResolvedIncidentAt;TimeBetweenIncidentCreatedAndReacted;IncidentStatus;IncidentNotes").append("\n");
         try {
+            DateTimeFormatter dtf = outputDateTimeFormat.map(DateTimeFormat::forPattern).orElse(ISODateTimeFormat.dateTime());
+
             List<Integer> days = Arrays.asList(Utils.MONDAY, Utils.TUESDAY, Utils.WEDNESDAY, Utils.THURSDAY, Utils.FRIDAY);
             serviceLevels.init(serviceDays, serviceStart, serviceStop);
 
@@ -67,15 +74,15 @@ public class PagerDutyReports {
             allIncidents.parallelStream()
             .forEach(incident -> incident.setLogEntries(pagerdutyRestService.getLogEntries(incident.getId(), token)));
 
-
             for(Incident incident : allIncidents) {
-                String triggered = incident.getCreatedAt();
+
+                String triggered = dtf.print(DateTime.parse(incident.getCreatedAt()));
                 String reacted = serviceLevels.getReactionTime(incident.getLogEntries());
                 String status = incident.getStatus();
-                String resolved = serviceLevels.getResolvedTime(incident.getLogEntries());
+                String resolved = dtf.print(DateTime.parse(serviceLevels.getResolvedTime(incident.getLogEntries())));
                 String incidentKey = incident.getIncidentKey();
                 Integer number  = incident.getIncidentNumber();
-                String reactionTimestamp = serviceLevels.getReactionTimeStamp(incident.getLogEntries());
+                String reactionTimestamp = dtf.print(DateTime.parse(serviceLevels.getReactionTimeStamp(incident.getLogEntries())));
                 String messages = serviceLevels.getMessages(incident.getLogEntries());
 
                 String line = number + SEP+ incidentKey+ SEP+triggered +SEP+ reactionTimestamp + SEP+resolved+SEP+reacted+ SEP+status + SEP +messages;

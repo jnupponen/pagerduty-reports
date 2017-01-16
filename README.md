@@ -15,16 +15,17 @@ IncidentNumber;IncidentKey;IncidentCreatedAt;ReactedToIncidentAt;ResolvedInciden
 
 ## Request parameters
 
-| Parameter    | Type              | Example              | Notes                                                              |
-|--------------|-------------------|----------------------|--------------------------------------------------------------------|
-| serviceDays  | array             | 1,2,3,4,5            | Monday is 1, Sunday is 7                                           |
-| serviceStart | Time              | 08:00:00.000         | The service start time according to your SLA                       |
-| serviceStop  | Time              | 22:00:00.00          | The service end time according to your SLA                         |
-| token        | String            | w_8PcNuhHa-y3xYdmc1x | PagerDuty API token (can and should be read-only)                  |
-| inclusion    | (Optional) String | Production           | Only PagerDuty services that start with *inclusion* will be listed |
-| since        | Date              | 2017-01-01           | Incidents will be included since this day                          |
-| until        | Date              | 2017-01-31           | Incidents will be included until this day                          |
-| timezone     | String            | Europe/Helsinki      | Timestamps will use this timezone                                  |
+| Parameter            | Type              | Example                   | Notes                                                              |
+|----------------------|-------------------|---------------------------|--------------------------------------------------------------------|
+| serviceDays          | array             | 1,2,3,4,5                 | Monday is 1, Sunday is 7                                           |
+| serviceStart         | Time              | 08:00:00.000              | The service start time according to your SLA                       |
+| serviceStop          | Time              | 22:00:00.00               | The service end time according to your SLA                         |
+| token                | String            | w_8PcNuhHa-y3xYdmc1x      | PagerDuty API token (can and should be read-only)                  |
+| inclusion            | (Optional) String | Production                | Only PagerDuty services that start with *inclusion* will be listed |
+| since                | Date              | 2017-01-01                | Incidents will be included since this day                          |
+| until                | Date              | 2017-01-31                | Incidents will be included until this day                          |
+| timezone             | String            | Europe/Helsinki           | Timestamps will use this timezone                                  |
+| outputDateTimeFormat | (Optional) String | yyyy-MM-dd'T'HH:mm:SS.sss | Timestamps will use this format in output                          |
 
 
 ## Run on local machine
