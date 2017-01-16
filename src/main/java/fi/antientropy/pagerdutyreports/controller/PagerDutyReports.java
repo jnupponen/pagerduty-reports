@@ -1,7 +1,6 @@
 package fi.antientropy.pagerdutyreports.controller;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -46,7 +45,6 @@ public class PagerDutyReports {
         try {
             DateTimeFormatter dtf = outputDateTimeFormat.map(DateTimeFormat::forPattern).orElse(ISODateTimeFormat.dateTime());
 
-            List<Integer> days = Arrays.asList(Utils.MONDAY, Utils.TUESDAY, Utils.WEDNESDAY, Utils.THURSDAY, Utils.FRIDAY);
             serviceLevels.init(serviceDays, serviceStart, serviceStop);
 
             List<Incidents> incidentss = new ArrayList<>();
@@ -66,10 +64,6 @@ public class PagerDutyReports {
             allIncidents = allIncidents.stream()
                     .filter(incident -> incident.getService().getSummary().startsWith(inclusion.orElse("")))
                     .collect(Collectors.toList());
-
-            List<String> incidentIds = allIncidents.stream().map(Incident::getId).collect(Collectors.toList());
-            System.out.println(incidentIds);
-
 
             allIncidents.parallelStream()
             .forEach(incident -> incident.setLogEntries(pagerdutyRestService.getLogEntries(incident.getId(), token)));
