@@ -74,7 +74,7 @@ public class PagerDutyReports {
                     .collect(Collectors.toList());
 
             allIncidents.parallelStream()
-            .forEach(incident -> incident.setLogEntries(pagerdutyRestService.getLogEntries(incident.getId(), token)));
+            .forEach(incident -> incident.setLogEntries(pagerdutyRestService.getLogEntries(incident.getId(), token, timezone)));
 
             for(Incident incident : allIncidents) {
 

@@ -1,8 +1,5 @@
 package fi.antientropy.pagerdutyreports.service;
 
-import java.util.Calendar;
-import java.util.TimeZone;
-
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -46,12 +43,10 @@ public class PagerdutyRestService {
             throw e;
         }
     }
-    public LogEntries getLogEntries(String incidentId, String token) {
+    public LogEntries getLogEntries(String incidentId, String token, String timezone) {
         try {
             HttpHeaders headers = this.createHeaders(token);
             HttpEntity entity = new HttpEntity(headers);
-
-            String timezone = Calendar.getInstance(TimeZone.getDefault()).getTimeZone().getID();
 
             ResponseEntity<LogEntries> response = rest.exchange(pagerdutyRestUrl+"/incidents/{id}/log_entries?time_zone={timezone}&include%5B%5D=incidents", HttpMethod.GET, entity, LogEntries.class, String.valueOf(incidentId), timezone);
 
