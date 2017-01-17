@@ -71,13 +71,19 @@ public class PagerDutyReports {
             for(Incident incident : allIncidents) {
 
                 String triggered = dtf.print(DateTime.parse(incident.getCreatedAt()));
-                String reacted = serviceLevels.getReactionTime(incident.getLogEntries());
+                String reacted = serviceLevels.getReactionTime(incident.getLogEntries()).orElse("");
                 String status = incident.getStatus();
-                String resolved = dtf.print(DateTime.parse(serviceLevels.getResolvedTime(incident.getLogEntries())));
+                String resolved = serviceLevels.getResolvedTime(incident.getLogEntries())
+                        .map(DateTime::parse)
+                        .map(value -> dtf.print(value))
+                        .orElse("");
                 String incidentKey = incident.getIncidentKey();
                 Integer number  = incident.getIncidentNumber();
-                String reactionTimestamp = dtf.print(DateTime.parse(serviceLevels.getReactionTimeStamp(incident.getLogEntries())));
-                String messages = serviceLevels.getMessages(incident.getLogEntries());
+                String reactionTimestamp = serviceLevels.getReactionTimeStamp(incident.getLogEntries())
+                        .map(DateTime::parse)
+                        .map(value -> dtf.print(value))
+                        .orElse("");
+                String messages = serviceLevels.getMessages(incident.getLogEntries()).orElse("");
 
                 String line = number + SEP+ incidentKey+ SEP+triggered +SEP+ reactionTimestamp + SEP+resolved+SEP+reacted+ SEP+status + SEP +messages;
                 builder.append(line);

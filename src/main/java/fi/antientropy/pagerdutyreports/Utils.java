@@ -3,6 +3,7 @@ package fi.antientropy.pagerdutyreports;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.joda.time.DateTime;
@@ -52,44 +53,50 @@ public class Utils implements ServiceLevels {
         this.serviceDays = serviceDays;
     }
     @Override
-    public String getReactionTime(LogEntries logEntries) throws Exception {
-        DateTime reaction = getReactionDateTime(logEntries);
+    public Optional<String> getReactionTime(LogEntries logEntries) throws Exception {
+        Optional<DateTime> optionalReaction = getReactionDateTime(logEntries);
+        if(optionalReaction.isPresent()) {
 
-        List<LogEntry> triggerLogEntries = logEntries.getLogEntries().stream()
-                .filter(logEntry -> "trigger_log_entry".equals(logEntry.getType()))
-                .collect(Collectors.toList());
+            DateTime reaction = optionalReaction.get();
+            List<LogEntry> triggerLogEntries = logEntries.getLogEntries().stream()
+                    .filter(logEntry -> "trigger_log_entry".equals(logEntry.getType()))
+                    .collect(Collectors.toList());
 
-         Collections.sort(triggerLogEntries, (first, second) -> {
-            boolean firstIsBefore = DateTime.parse(first.getCreatedAt()).isBefore(DateTime.parse(second.getCreatedAt()));
-             return firstIsBefore ? -1 : 1;
+             Collections.sort(triggerLogEntries, (first, second) -> {
+                boolean firstIsBefore = DateTime.parse(first.getCreatedAt()).isBefore(DateTime.parse(second.getCreatedAt()));
+                 return firstIsBefore ? -1 : 1;
 
-         });
+             });
 
-         DateTime triggered = triggerLogEntries.stream()
-            .findFirst()
-            .map(LogEntry::getCreatedAt)
-            .map(DateTime::parse)
-            .orElseThrow(() -> new Exception("time not defined in triggered"));
+             DateTime triggered = triggerLogEntries.stream()
+                .findFirst()
+                .map(LogEntry::getCreatedAt)
+                .map(DateTime::parse)
+                .orElseThrow(() -> new Exception("time not defined in triggered"));
 
-         triggered = adjustByServiceDays(triggered);
-         if(triggered.toLocalTime().isAfter(serviceStop)) {
-             LocalDate next = triggered.toLocalDate().plusDays(1);
-             triggered = next.toDateTime(serviceStart, DateTimeZone.forOffsetHours(2));
-         }
-         if(triggered.toLocalTime().isBefore(serviceStart)) {
-             triggered = triggered.toLocalDate().toDateTime(serviceStart, DateTimeZone.forOffsetHours(2));
-         }
+             triggered = adjustByServiceDays(triggered);
+             if(triggered.toLocalTime().isAfter(serviceStop)) {
+                 LocalDate next = triggered.toLocalDate().plusDays(1);
+                 triggered = next.toDateTime(serviceStart, DateTimeZone.forOffsetHours(2));
+             }
+             if(triggered.toLocalTime().isBefore(serviceStart)) {
+                 triggered = triggered.toLocalDate().toDateTime(serviceStart, DateTimeZone.forOffsetHours(2));
+             }
 
-         Long days = getAmountOfNonServiceDays(triggered, reaction);
-         Long nights = getAmountOfNonServiceNightsBetween(triggered, reaction);
-         Duration duration = new Duration(triggered.toDateTime(DateTimeZone.UTC), reaction.toDateTime(DateTimeZone.UTC))
-         .minus(new Duration(days*24*60*60*1000))
-         .minus(new Duration(nights*14*60*60*1000));
-         if(duration.isShorterThan(new Duration(0))) {
-             duration = new Duration(0);
-         }
-         String durationString = duration.toPeriod().toString(HOURS_MINUTES_SECONDS);
-         return durationString;
+             Long days = getAmountOfNonServiceDays(triggered, reaction);
+             Long nights = getAmountOfNonServiceNightsBetween(triggered, reaction);
+             Duration duration = new Duration(triggered.toDateTime(DateTimeZone.UTC), reaction.toDateTime(DateTimeZone.UTC))
+             .minus(new Duration(days*24*60*60*1000))
+             .minus(new Duration(nights*14*60*60*1000));
+             if(duration.isShorterThan(new Duration(0))) {
+                 duration = new Duration(0);
+             }
+             String durationString = duration.toPeriod().toString(HOURS_MINUTES_SECONDS);
+             return Optional.of(durationString);
+        }
+        else {
+            return Optional.empty();
+        }
     }
 
 
@@ -140,7 +147,7 @@ public class Utils implements ServiceLevels {
 
 
     @Override
-    public String getResolvedTime(LogEntries logEntries) throws Exception {
+    public Optional<String> getResolvedTime(LogEntries logEntries) throws Exception {
         List<LogEntry> resolved = logEntries.getLogEntries().stream()
                 .filter(logEntry -> "resolve_log_entry".equals(logEntry.getType()))
                 .collect(Collectors.toList());
@@ -151,14 +158,14 @@ public class Utils implements ServiceLevels {
          });
 
          Collections.reverse(resolved);
-         return resolved.stream().findFirst().map(LogEntry::getCreatedAt).orElse("not_known");
+         return resolved.stream().findFirst().map(LogEntry::getCreatedAt);
     }
     @Override
-    public String getReactionTimeStamp(LogEntries logEntries) throws Exception {
-        return getReactionDateTime(logEntries).toString();
+    public Optional<String> getReactionTimeStamp(LogEntries logEntries) throws Exception {
+        return getReactionDateTime(logEntries).map(DateTime::toString);
     }
 
-    private DateTime getReactionDateTime(LogEntries logEntries) throws Exception {
+    private Optional<DateTime> getReactionDateTime(LogEntries logEntries) throws Exception {
         List<LogEntry> reactions = logEntries.getLogEntries().stream()
                 .filter(logEntry -> "annotate_log_entry".equals(logEntry.getType()) || "acknowledge_log_entry".equals(logEntry.getType()) || "resolve_log_entry".equals(logEntry.getType()))
                 .collect(Collectors.toList());
@@ -169,16 +176,15 @@ public class Utils implements ServiceLevels {
 
          });
 
-         DateTime reaction = reactions.stream()
+         Optional<DateTime> reaction = reactions.stream()
             .findFirst()
             .map(LogEntry::getCreatedAt)
-            .map(DateTime::parse)
-            .orElseThrow(() -> new Exception("time not defined in reactions"));
+            .map(DateTime::parse);
 
          return reaction;
     }
     @Override
-    public String getMessages(LogEntries logEntries) throws Exception {
+    public Optional<String> getMessages(LogEntries logEntries) throws Exception {
         List<LogEntry> messages = logEntries.getLogEntries().stream()
                 .filter(logEntry -> "annotate_log_entry".equals(logEntry.getType()))
                 .collect(Collectors.toList());
@@ -190,7 +196,7 @@ public class Utils implements ServiceLevels {
             }
             builder.append(logEntry.getChannel().getSummary());
         }
-        return builder.toString().replace(";", "SEMICOLON_REMOVED").replace("\r", "").replace("\n\n", "|").replace("\n", "");
+        return Optional.ofNullable(builder.toString().replace(";", "SEMICOLON_REMOVED").replace("\r", "").replace("\n\n", "|").replace("\n", ""));
     }
 
 }

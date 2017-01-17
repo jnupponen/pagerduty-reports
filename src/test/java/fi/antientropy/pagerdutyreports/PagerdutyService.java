@@ -66,9 +66,9 @@ public class PagerdutyService {
 
         for(Incident incident : manyIncidents) {
             String triggered = incident.getCreatedAt();
-            String reacted = serviceLevels.getReactionTime(incident.getLogEntries());
+            String reacted = serviceLevels.getReactionTime(incident.getLogEntries()).orElse("not found");
             String status = incident.getStatus();
-            String resolved = serviceLevels.getResolvedTime(incident.getLogEntries());
+            String resolved = serviceLevels.getResolvedTime(incident.getLogEntries()).orElse("not found");
             String incidentKey = incident.getIncidentKey();
             Integer number  = incident.getIncidentNumber();
 
