@@ -9,8 +9,12 @@ import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 import org.joda.time.format.ISODateTimeFormat;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -33,15 +37,19 @@ public class PagerDutyReports {
 
     private Utils serviceLevels = new Utils();
 
-    @RequestMapping(value = "/", method = RequestMethod.GET)
+    @RequestMapping(value = "/", method = RequestMethod.GET, produces = MediaType.TEXT_HTML_VALUE)
     @ResponseBody
     public ResponseEntity<?> getReport(@RequestParam List<Integer> serviceDays,
             @RequestParam String serviceStart, @RequestParam String serviceStop,
             @RequestParam Optional<String> inclusion, @RequestParam String token,
             @RequestParam String since, @RequestParam String until, @RequestParam String timezone,
             @RequestParam Optional<String> outputDateTimeFormat) {
-        StringBuilder builder = new StringBuilder();
-        builder.append("IncidentNumber;IncidentKey;IncidentCreatedAt;ReactedToIncidentAt;ResolvedIncidentAt;TimeBetweenIncidentCreatedAndReacted;IncidentStatus;IncidentNotes").append("\n");
+
+        Document document = Jsoup.parse("");
+        Element pre = document.getElementsByTag("body").first().appendElement("pre");
+
+        String header = "IncidentNumber;IncidentKey;IncidentCreatedAt;ReactedToIncidentAt;ResolvedIncidentAt;TimeBetweenIncidentCreatedAndReacted;IncidentStatus;IncidentNotes";
+        pre.appendText(header).appendText("\n");
         try {
             DateTimeFormatter dtf = outputDateTimeFormat.map(DateTimeFormat::forPattern).orElse(ISODateTimeFormat.dateTime());
 
@@ -86,11 +94,12 @@ public class PagerDutyReports {
                 String messages = serviceLevels.getMessages(incident.getLogEntries()).orElse("");
 
                 String line = number + SEP+ incidentKey+ SEP+triggered +SEP+ reactionTimestamp + SEP+resolved+SEP+reacted+ SEP+status + SEP +messages;
-                builder.append(line);
-                builder.append("\r\n");
+
+                pre.appendText(line);
+                pre.appendText("\n");
 
             }
-            return new ResponseEntity<String>(builder.toString(), HttpStatus.OK);
+            return new ResponseEntity<String>(document.html(), HttpStatus.OK);
         }
         catch (Exception e) {
             e.printStackTrace();
