@@ -62,7 +62,7 @@ public class PagerdutyService {
 
 
         manyIncidents.parallelStream()
-        .forEach(incident -> incident.setLogEntries(pagerdutyRestService.getLogEntries(incident.getId(), token)));
+        .forEach(incident -> incident.setLogEntries(pagerdutyRestService.getLogEntries(incident.getId(), token, "Europe/Helsinki")));
 
         for(Incident incident : manyIncidents) {
             String triggered = incident.getCreatedAt();
