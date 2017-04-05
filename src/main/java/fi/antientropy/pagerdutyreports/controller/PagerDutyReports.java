@@ -48,7 +48,7 @@ public class PagerDutyReports {
         Document document = Jsoup.parse("");
         Element pre = document.getElementsByTag("body").first().appendElement("pre");
 
-        String header = "IncidentNumber;IncidentKey;IncidentCreatedAt;ReactedToIncidentAt;ResolvedIncidentAt;TimeBetweenIncidentCreatedAndReacted;IncidentStatus;IncidentNotes";
+        String header = "Service;IncidentNumber;IncidentKey;IncidentCreatedAt;ReactedToIncidentAt;ResolvedIncidentAt;TimeBetweenIncidentCreatedAndReacted;IncidentStatus;IncidentNotes";
         pre.appendText(header).appendText("\n");
         try {
             DateTimeFormatter dtf = outputDateTimeFormat.map(DateTimeFormat::forPattern).orElse(ISODateTimeFormat.dateTime());
@@ -78,6 +78,7 @@ public class PagerDutyReports {
 
             for(Incident incident : allIncidents) {
 
+                String service = incident.getService().getSummary();
                 String triggered = dtf.print(DateTime.parse(incident.getCreatedAt()));
                 String reacted = serviceLevels.getReactionTime(incident.getLogEntries()).orElse("");
                 String status = incident.getStatus();
@@ -93,7 +94,7 @@ public class PagerDutyReports {
                         .orElse("");
                 String messages = serviceLevels.getMessages(incident.getLogEntries()).orElse("");
 
-                String line = number + SEP+ incidentKey+ SEP+triggered +SEP+ reactionTimestamp + SEP+resolved+SEP+reacted+ SEP+status + SEP +messages;
+                String line = service+SEP+number + SEP+ incidentKey+ SEP+triggered +SEP+ reactionTimestamp + SEP+resolved+SEP+reacted+ SEP+status + SEP +messages;
 
                 pre.appendText(line);
                 pre.appendText("\n");
