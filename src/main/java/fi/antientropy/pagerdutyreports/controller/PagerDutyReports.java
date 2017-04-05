@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.StringEscapeUtils;
 import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
@@ -48,7 +49,7 @@ public class PagerDutyReports {
         Document document = Jsoup.parse("");
         Element pre = document.getElementsByTag("body").first().appendElement("pre");
 
-        String header = "Service;IncidentNumber;IncidentKey;IncidentCreatedAt;ReactedToIncidentAt;ResolvedIncidentAt;TimeBetweenIncidentCreatedAndReacted;IncidentStatus;IncidentNotes";
+        String header = "Service;IncidentNumber;IncidentKey;IncidentCreatedAt;ReactedToIncidentAt;ResolvedIncidentAt;TimeBetweenIncidentCreatedAndReacted;IncidentStatus;IncidentDescription;IncidentNotes";
         pre.appendText(header).appendText("\n");
         try {
             DateTimeFormatter dtf = outputDateTimeFormat.map(DateTimeFormat::forPattern).orElse(ISODateTimeFormat.dateTime());
@@ -92,9 +93,22 @@ public class PagerDutyReports {
                         .map(DateTime::parse)
                         .map(value -> dtf.print(value))
                         .orElse("");
+
+                String description = incident.getDescription();
+
                 String messages = serviceLevels.getMessages(incident.getLogEntries()).orElse("");
 
-                String line = service+SEP+number + SEP+ incidentKey+ SEP+triggered +SEP+ reactionTimestamp + SEP+resolved+SEP+reacted+ SEP+status + SEP +messages;
+                String line =
+                        service + SEP
+                        + number + SEP
+                        + incidentKey + SEP
+                        + triggered +SEP
+                        + reactionTimestamp + SEP
+                        + resolved + SEP
+                        + reacted + SEP
+                        + status  + SEP
+                        + StringEscapeUtils.escapeCsv(description) + SEP
+                        + StringEscapeUtils.escapeCsv(messages);
 
                 pre.appendText(line);
                 pre.appendText("\n");
