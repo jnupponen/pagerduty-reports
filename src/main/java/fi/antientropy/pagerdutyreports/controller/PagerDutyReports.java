@@ -107,8 +107,8 @@ public class PagerDutyReports {
                         + resolved + SEP
                         + reacted + SEP
                         + status  + SEP
-                        + StringEscapeUtils.escapeCsv(description) + SEP
-                        + StringEscapeUtils.escapeCsv(messages);
+                        + StringEscapeUtils.escapeCsv(description.replace(";", "")) + SEP
+                        + StringEscapeUtils.escapeCsv(messages.replace(";", ""));
 
                 pre.appendText(line);
                 pre.appendText("\n");
